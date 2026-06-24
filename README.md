@@ -9,6 +9,7 @@ Written by Tom Hottinger (artScape cybernetics).
 ## Features
 
 - Instantly finds a free TCP port and prints it to stdout
+- Optional IP address binding via `--ip` (IPv4 and IPv6 supported)
 - Optional port range restriction via `--min` and `--max`
 - Clean output — only the port number goes to stdout, errors go to stderr
 - Works on Windows and Linux
@@ -38,10 +39,22 @@ The binary will be at `target/release/freesocket` (Linux) or `target\release\fre
 freesocket [OPTIONS]
 
 OPTIONS:
+  --ip  <IP>          IP address to bind to (default: 0.0.0.0)
+                      IPv4 and IPv6 are supported.
   --min <PORT>        Minimum port number (default: 1024)
   --max <PORT>        Maximum port number (default: 65535)
   --help, -h, /?, -?  Show help message
 ```
+
+### IP address reference
+
+| Value       | Meaning                        |
+|-------------|--------------------------------|
+| `0.0.0.0`   | All IPv4 interfaces (default)  |
+| `127.0.0.1` | Loopback IPv4 only             |
+| `::`        | All IPv6 interfaces            |
+| `::1`       | Loopback IPv6 only             |
+| any IP      | Specific network interface     |
 
 ### Examples
 
@@ -54,6 +67,15 @@ freesocket --min 8000 --max 9000
 
 # Find a free port starting from 3000
 freesocket --min 3000
+
+# Bind to loopback only (IPv4)
+freesocket --ip 127.0.0.1
+
+# Bind to loopback only (IPv6)
+freesocket --ip ::1
+
+# Combine IP and range
+freesocket --ip 127.0.0.1 --min 8000 --max 9000
 ```
 
 ### Using the output in scripts
@@ -68,7 +90,7 @@ echo "Starting server on port $PORT"
 
 ```powershell
 # PowerShell
-$PORT = .\freesocket.exe --min 8000 --max 9000
+$PORT = .\freesocket.exe --ip 127.0.0.1 --min 8000 --max 9000
 Write-Host "Starting server on port $PORT"
 ```
 

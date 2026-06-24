@@ -1,7 +1,8 @@
-use std::net::TcpListener;
+use std::net::{IpAddr, TcpListener};
 
 const DEFAULT_MIN: u16 = 1024;
 const DEFAULT_MAX: u16 = 65535;
+const DEFAULT_IP: &str = "0.0.0.0";
 
 fn print_help(program: &str) {
     eprintln!("freesocket, written by Tom Hottinger (artScape cybernetics). All rights reserved.");
@@ -12,18 +13,22 @@ fn print_help(program: &str) {
     eprintln!("Finds a free TCP port available for listening and prints it to stdout.");
     eprintln!();
     eprintln!("OPTIONS:");
+    eprintln!("  --ip  <IP>          IP address to bind to (default: {})", DEFAULT_IP);
+    eprintln!("                      Use 127.0.0.1 for loopback, 0.0.0.0 for all IPv4 interfaces.");
+    eprintln!("                      IPv6 is supported, e.g. ::1 (loopback) or :: (all interfaces).");
     eprintln!("  --min <PORT>        Minimum port number (default: {})", DEFAULT_MIN);
     eprintln!("  --max <PORT>        Maximum port number (default: {})", DEFAULT_MAX);
     eprintln!("  --help, -h, /?, -?  Show this help message");
     eprintln!();
     eprintln!("EXAMPLES:");
-    eprintln!("  {}                       Find any free user port", program);
-    eprintln!("  {} --min 8000 --max 9000  Search only in 8000-9000", program);
-    eprintln!("  {} --min 3000             Search from port 3000 upward", program);
+    eprintln!("  {}                            Find any free user port on all interfaces", program);
+    eprintln!("  {} --ip 127.0.0.1             Only check loopback (IPv4)", program);
+    eprintln!("  {} --ip ::1                   Only check loopback (IPv6)", program);
+    eprintln!("  {} --ip 0.0.0.0 --min 8000 --max 9000", program);
 }
 
-fn find_free_port(min: u16, max: u16) -> Option<u16> {
-    (min..=max).find(|&port| TcpListener::bind(("127.0.0.1", port)).is_ok())
+fn find_free_port(ip: IpAddr, min: u16, max: u16) -> Option<u16> {
+    (min..=max).find(|&port| TcpListener::bind((ip, port)).is_ok())
 }
 
 fn main() {
@@ -32,6 +37,7 @@ fn main() {
 
     let mut min = DEFAULT_MIN;
     let mut max = DEFAULT_MAX;
+    let mut ip: IpAddr = DEFAULT_IP.parse().unwrap();
 
     let mut i = 1;
     while i < args.len() {
@@ -39,6 +45,16 @@ fn main() {
             "--help" | "-h" | "/?" | "-?" => {
                 print_help(program);
                 std::process::exit(0);
+            }
+            "--ip" => {
+                i += 1;
+                match args.get(i).and_then(|v| v.parse::<IpAddr>().ok()) {
+                    Some(v) => ip = v,
+                    None => {
+                        eprintln!("Error: --ip requires a valid IP address (e.g. 127.0.0.1 or ::1)");
+                        std::process::exit(1);
+                    }
+                }
             }
             "--min" => {
                 i += 1;
@@ -74,10 +90,10 @@ fn main() {
         std::process::exit(1);
     }
 
-    match find_free_port(min, max) {
+    match find_free_port(ip, min, max) {
         Some(port) => println!("{}", port),
         None => {
-            eprintln!("Error: no free port found in range {}-{}", min, max);
+            eprintln!("Error: no free port found in range {}-{} on {}", min, max, ip);
             std::process::exit(1);
         }
     }
