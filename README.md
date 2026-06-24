@@ -1,6 +1,6 @@
 # freesocket
 
-**freesocket** is a lightweight command-line utility that finds and prints a free TCP port available for listening on the local machine.
+**freesocket** is a lightweight command-line utility that finds and prints a free TCP port available for listening on the local machine. Intended for Scripting. It's written in RUST so it can be considered safe. 
 
 Written by Tom Hottinger (artScape cybernetics).
 
